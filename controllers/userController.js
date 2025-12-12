@@ -1,0 +1,155 @@
+import { PrismaClient } from "@prisma/client";
+import jwt from 'jsonwebtoken'
+import nodemailer from 'nodemailer'
+import bcrypt from 'bcrypt'
+
+const prisma = new PrismaClient();
+
+const registerUser = async (req,res) =>{
+    try {
+        const {fullName, email,password, role} = req.body
+        const hashedPassword = await bcrypt.hash(password, 10)
+        const user = await prisma.Users.create({
+            data:{
+                fullName,
+                email,
+                password:hashedPassword,
+                role
+            }
+        });
+        res.status(201).json({message:"User registered successfully", userId: user.id})
+
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: false,
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const emailHtml = `
+          <div style="font-family: sans-serif; background-color: #f4f4f4; padding: 20px;">
+            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; padding: 20px;">
+              <h2 style="text-align: center; color: #333;">Welcome to FreelanceHub!</h2>
+              <p>Hi ${fullName},</p>
+              <p>Thank you for registering at FreelanceHub! We're excited to have you on board.</p>
+              <p>Best regards,</p>
+              <p><strong>The FreelanceHub Team</strong></p>
+            </div>
+          </div>
+        `;
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Welcome to FreelanceHub!',
+            html: emailHtml
+        });
+
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+}
+
+const loginUser = async (req, res) =>{
+    try {
+        const {email, password} = req.body
+        const user = await prisma.Users.findUnique({
+            where:{
+                email
+            }
+        });
+        if(!user){
+            return res.status(401).json({error: 'Invalid credentials'})
+        }
+        
+        const isPasswordValid = await bcrypt.compare(password, user.password)
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign(
+            {userId: user.id, email: user.email},
+            process.env.JWT_SECRET,
+            {expiresIn: '1h'}
+        )
+
+        res.json({
+            message: 'Login successful',
+            token,
+            user:{
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email
+            }
+        })
+
+        
+
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+}
+
+const logoutUser = async (req, res) => {
+    try {
+        res.json({ message: 'Logout successful' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+const refreshToken = async (req, res)=> {
+    try {
+        const {refreshToken} = req.body
+
+        if (!refreshToken) {
+            return res.status(401).json({error: 'Refresh token required'})
+        }
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
+        const user = await prisma.Users.findUnique({
+            where:{
+                id: decoded.userId
+            }
+        })
+
+        if (!user) {
+            return res.status(401).json({error: 'User not found'})
+        }
+
+        const newAccessToken = jwt.sign(
+            { userId: user.id, email: user.email },
+            process.env.JWT_SECRET,
+            {expiresIn: '15m'}
+        )
+
+        res.json({
+            accessToken: newAccessToken
+        })
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+}
+
+const deleteUser = async (req, res)=> {
+    try {
+       await prisma.Users.delete({
+        where: {id:parseInt(req.params.id) }
+       }) 
+       
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+
+}
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshToken,
+    deleteUser
+}

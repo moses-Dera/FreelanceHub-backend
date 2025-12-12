@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+
+enum Role {
+  FREELANCER
+  CLIENT
+  ADMIN
+}
+
+model Users {
+  id             String @id @default(uuid()) @db.Uuid
+  fullName       String
+  email          String @unique
+  password       String 
+  role           Role   @default(FREELANCER) 
+  rating         Int?   @default(0)
+  walletBalance  Int?   @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  job                Jobs[]
+  proposals          Proposals[]
+  clientContracts    Contracts[] @relation("ClientContracts")
+  freelancerContracts Contracts[] @relation("FreelancerContracts")
+  payment            Payments[]
+  reviewsGiven       Reviews[] @relation("reviewerReview")
+  reviewsReceived    Reviews[] @relation("revieweeReview")
+}
+
+enum jobStatus {
+  OPEN
+  ASSIGNED
+  COMPLETED
+}
+
+model Jobs {
+  id            Int @id @default(autoincrement())
+  clientId      String @db.Uuid
+  client        Users @relation(fields: [clientId], references: [id])  
+  title         String    
+  description   String
+  budgetMin     String
+  budgetMax     String
+  status        jobStatus @default(OPEN)
+  deadline      DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  //relations
+  proposal      Proposals[]
+  contract      Contracts[]
+}
+
+enum ProposalStatus {
+  PENDING
+  REVIEWED
+  SHORTLISTED
+  ACCEPTED
+  REJECTED
+}
+
+model Proposals {
+  id             String   @id @default(uuid())
+  userId         String @db.Uuid
+  jobId          Int
+
+  coverLetter    String?
+  expectedSalary Int?
+  resumeUrl      String?
+  portfolioLinks String[]
+  attachments    String[]
+
+  status         ProposalStatus @default(PENDING)
+  reviewNotes    String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           Users @relation(fields: [userId], references: [id])
+  job            Jobs @relation(fields: [jobId], references: [id])
+}
+
+enum contractStatus {
+ACTIVE
+SUBMITTED
+COMPLETED
+DISPUTED
+}
+
+model Contracts {
+  id            Int @id @default(autoincrement())
+  jobId         Int
+  job           Jobs @relation(fields: [jobId], references: [id])
+  clientId      String @db.Uuid
+  client        Users @relation("ClientContracts", fields: [clientId], references: [id])
+  freelancerId  String @db.Uuid
+  freelancer    Users @relation("FreelancerContracts", fields: [freelancerId], references: [id])
+  status        contractStatus @default(ACTIVE)
+  startDate     DateTime
+  endDate       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  milestones    Milestones[]
+  payments      Payments[]
+  reviews       Reviews[] @relation("contractReview")
+
+}
+
+enum milestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}
+
+model Milestones {
+  id          Int @id @default(autoincrement())
+  contractId  Int
+  contract    Contracts @relation(fields: [contractId], references: [id])
+  title       String
+  description String?
+  amount      Int
+  dueDate     DateTime
+  status      milestoneStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum PaymentType {
+  DEPOSIT
+  PAYOUT
+  WITHDRAWAL
+}
+model Payments {
+  id            Int @id @default(autoincrement())
+  contractId    Int
+  contract      Contracts @relation(fields: [contractId], references: [id])
+  userId        String @db.Uuid
+  user          Users @relation(fields: [userId], references: [id])
+  amount        Int
+  type          PaymentType @default(DEPOSIT)
+  gatewayRf     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  //relations
+  
+}
+
+model Reviews {
+  id            Int @id @default(autoincrement())
+  contractId    Int 
+  contract      Contracts @relation("contractReview",fields: [contractId], references: [id])
+  reviewerId    String @db.Uuid
+  reviewer      Users @relation("reviewerReview",fields: [reviewerId], references: [id])
+  revieweeId    String @db.Uuid
+  reviewee      Users @relation("revieweeReview",fields: [revieweeId], references: [id])
+  rating        Int
+  comment       String
+
+}
