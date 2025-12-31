@@ -1,6 +1,6 @@
-import { jest, describe, test, expect } from '@jest/globals';
+import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import request from 'supertest';
-import { prismaMock } from './prismaMock.js'; // Ensure .js extension
+import { prismaMock } from './prismaMock.js';
 import app from '../server.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -12,12 +12,22 @@ jest.mock('bcrypt', () => ({
         compare: jest.fn(),
     },
 }));
+
 jest.mock('jsonwebtoken', () => ({
     __esModule: true,
     default: {
         sign: jest.fn(),
         verify: jest.fn(),
     },
+}));
+
+jest.mock('nodemailer', () => ({
+    __esModule: true,
+    default: {
+        createTransport: jest.fn().mockReturnValue({
+            sendMail: jest.fn().mockResolvedValue(true)
+        })
+    }
 }));
 
 describe('Auth Endpoints', () => {
@@ -32,6 +42,19 @@ describe('Auth Endpoints', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
     };
+
+    const mockAdmin = {
+        ...mockUser,
+        role: 'ADMIN'
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        // Default mock for jwt.verify (simulate authenticated user for protected routes)
+        (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', email: 'test@example.com', role: 'FREELANCER' });
+        // Default prisma findUnique response for auth middleware
+        prismaMock.Users.findUnique.mockResolvedValue(mockUser as any);
+    });
 
     test('POST /api/auth/register should register a new user', async () => {
         (bcrypt.hash as jest.Mock).mockResolvedValue('hashedpassword');
@@ -65,5 +88,41 @@ describe('Auth Endpoints', () => {
 
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty('token', 'mockToken');
+    });
+
+    test('POST /api/auth/logout should logout user', async () => {
+        const res = await request(app)
+            .post('/api/auth/logout');
+
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveProperty('message', 'Logout successful');
+    });
+
+    test('POST /api/auth/refresh-token should refresh access token', async () => {
+        // Mock jwt.verify to return a valid decoded token
+        (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', email: 'test@example.com' });
+        prismaMock.Users.findUnique.mockResolvedValue(mockUser as any);
+        (jwt.sign as jest.Mock).mockReturnValue('newAccessToken');
+
+        const res = await request(app)
+            .post('/api/auth/refresh-token')
+            .send({ refreshToken: 'validRefreshToken' });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveProperty('accessToken', 'newAccessToken');
+    });
+
+    test('POST /api/auth/delete/:id should delete user (ADMIN only)', async () => {
+        // Override mock for ADMIN role
+        (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', email: 'test@example.com', role: 'ADMIN' });
+        prismaMock.Users.findUnique.mockResolvedValue(mockAdmin as any);
+        prismaMock.Users.delete.mockResolvedValue(mockUser as any);
+
+        const res = await request(app)
+            .post('/api/auth/delete/123')
+            .set('Authorization', 'Bearer adminToken');
+
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveProperty('message', 'User deleted successfully');
     });
 });

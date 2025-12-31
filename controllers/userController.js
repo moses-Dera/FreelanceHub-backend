@@ -3,19 +3,19 @@ import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import bcrypt from 'bcrypt'
 
-const registerUser = async (req,res) =>{
+const registerUser = async (req, res) => {
     try {
-        const {fullName, email,password, role} = req.body
+        const { fullName, email, password, role } = req.body
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await prisma.Users.create({
-            data:{
+            data: {
                 fullName,
                 email,
-                password:hashedPassword,
+                password: hashedPassword,
                 role
             }
         });
-        res.status(201).json({message:"User registered successfully", userId: user.id})
+        res.status(201).json({ message: "User registered successfully", userId: user.id })
 
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
@@ -47,22 +47,22 @@ const registerUser = async (req,res) =>{
         });
 
     } catch (error) {
-        res.status(500).json({error: error.message})
+        res.status(500).json({ error: error.message })
     }
 }
 
-const loginUser = async (req, res) =>{
+const loginUser = async (req, res) => {
     try {
-        const {email, password} = req.body
+        const { email, password } = req.body
         const user = await prisma.Users.findUnique({
-            where:{
+            where: {
                 email
             }
         });
-        if(!user){
-            return res.status(401).json({error: 'Invalid credentials'})
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' })
         }
-        
+
         const isPasswordValid = await bcrypt.compare(password, user.password)
 
         if (!isPasswordValid) {
@@ -70,25 +70,25 @@ const loginUser = async (req, res) =>{
         }
 
         const token = jwt.sign(
-            {userId: user.id, email: user.email},
+            { userId: user.id, email: user.email },
             process.env.JWT_SECRET,
-            {expiresIn: '1h'}
+            { expiresIn: '1h' }
         )
 
         res.json({
             message: 'Login successful',
             token,
-            user:{
+            user: {
                 id: user.id,
                 fullName: user.fullName,
                 email: user.email
             }
         })
 
-        
+
 
     } catch (error) {
-        res.status(500).json({error: error.message})
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -100,46 +100,46 @@ const logoutUser = async (req, res) => {
     }
 }
 
-const refreshToken = async (req, res)=> {
+const refreshToken = async (req, res) => {
     try {
-        const {refreshToken} = req.body
+        const { refreshToken } = req.body
 
         if (!refreshToken) {
-            return res.status(401).json({error: 'Refresh token required'})
+            return res.status(401).json({ error: 'Refresh token required' })
         }
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
         const user = await prisma.Users.findUnique({
-            where:{
+            where: {
                 id: decoded.userId
             }
         })
 
         if (!user) {
-            return res.status(401).json({error: 'User not found'})
+            return res.status(401).json({ error: 'User not found' })
         }
 
         const newAccessToken = jwt.sign(
             { userId: user.id, email: user.email },
             process.env.JWT_SECRET,
-            {expiresIn: '15m'}
+            { expiresIn: '15m' }
         )
 
         res.json({
             accessToken: newAccessToken
         })
     } catch (error) {
-        res.status(500).json({error: error.message})
+        res.status(500).json({ error: error.message })
     }
 }
 
-const deleteUser = async (req, res)=> {
+const deleteUser = async (req, res) => {
     try {
-       await prisma.Users.delete({
-        where: {id:parseInt(req.params.id) }
-       }) 
-       
+        await prisma.Users.delete({
+            where: { id: parseInt(req.params.id) }
+        })
+        res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
-        res.status(500).json({error: error.message})
+        res.status(500).json({ error: error.message })
     }
 
 }
