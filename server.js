@@ -8,11 +8,18 @@ import contractRoutes from './routes/contractRoutes.js';
 
 dotenv.config();
 
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger.js';
+
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
@@ -20,6 +27,10 @@ app.use('/api', proposalRoutes);
 app.use('/api/contracts', contractRoutes);
 
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+export default app;
