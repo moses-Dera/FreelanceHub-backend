@@ -4,7 +4,7 @@
   "description": "A freelance marketplace where job seekers get job placement from clients.",
   "main": "server.js",
   "scripts": {
-    "dev":"nodemon server.js",
+    "dev": "nodemon --exec tsx server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,13 +19,15 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
+    "@types/pg": "^8.16.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.10",
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "pg": "^8.16.3"
   },
   "type": "module",
   "directories": {

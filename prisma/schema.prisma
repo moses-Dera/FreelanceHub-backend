@@ -40,6 +40,8 @@ model Users {
   payment            Payments[]
   reviewsGiven       Reviews[] @relation("reviewerReview")
   reviewsReceived    Reviews[] @relation("revieweeReview")
+  files              Files[]
+  notifications      Notifications[]
 }
 
 enum jobStatus {
@@ -110,9 +112,13 @@ model Contracts {
   client        Users @relation("ClientContracts", fields: [clientId], references: [id])
   freelancerId  String @db.Uuid
   freelancer    Users @relation("FreelancerContracts", fields: [freelancerId], references: [id])
+  amount        Int
   status        contractStatus @default(ACTIVE)
+  milestoneJson Json?
+  deadline      DateTime
   startDate     DateTime
   endDate       DateTime
+  completedAt   DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -143,6 +149,12 @@ model Milestones {
   updatedAt   DateTime @updatedAt
 }
 
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 enum PaymentType {
   DEPOSIT
   PAYOUT
@@ -156,6 +168,7 @@ model Payments {
   user          Users @relation(fields: [userId], references: [id])
   amount        Int
   type          PaymentType @default(DEPOSIT)
+  status        PaymentStatus @default(PENDING)
   gatewayRf     String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -174,5 +187,37 @@ model Reviews {
   reviewee      Users @relation("revieweeReview",fields: [revieweeId], references: [id])
   rating        Int
   comment       String
+  createdAt     DateTime @default(now())
+}
 
+enum NotificationType {
+  PROPOSAL_RECEIVED
+  PROPOSAL_ACCEPTED
+  CONTRACT_CREATED
+  PAYMENT_RECEIVED
+  REVIEW_RECEIVED
+}
+
+model Files {
+  id        Int    @id @default(autoincrement())
+  ownerType String // "user", "proposal", "contract"
+  ownerId   String @db.Uuid
+  s3Key     String
+  filename  String
+  mime      String
+  size      Int
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      Users @relation(fields: [ownerId], references: [id])
+}
+
+model Notifications {
+  id        Int              @id @default(autoincrement())
+  userId    String           @db.Uuid
+  user      Users            @relation(fields: [userId], references: [id])
+  type      NotificationType
+  payload   Json             // Flexible data storage
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
 }

@@ -5,8 +5,8 @@ import {
     getJobs,
     updateJob,
     deleteJob
-} from '../controllers/jobController'
-import authorize from '../middlewares/authorize';
+} from '../controllers/jobController.js'
+import authorize from '../middlewares/authorize.js';
 
 const router = express.Router();
 

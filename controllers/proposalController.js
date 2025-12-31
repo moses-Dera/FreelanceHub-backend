@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client/extension";
-
-const prisma = new PrismaClient()
+import { prisma } from "../lib/prisma.ts";
 
 // POST /jobs/:id/proposals
 const addProposal = async (req, res) => {

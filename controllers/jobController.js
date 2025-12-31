@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client/extension";
-
-const prisma = new PrismaClient()
+import { prisma } from "../lib/prisma.ts";
 
 const addJob = async (req, res) => {
     try {

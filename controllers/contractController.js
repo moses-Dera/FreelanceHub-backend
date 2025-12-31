@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma.ts";
 
 // POST /contracts - Create contract from accepted proposal
 const addContract = async (req, res) => {
@@ -67,6 +65,34 @@ const addContract = async (req, res) => {
     }
 };
 
+const getContracts = async (req, res) => {
+    try {
+        const { userId, role } = req.user; // Extracted from auth
+
+        let whereClause = {};
+
+        if (role === 'CLIENT') {
+            whereClause.clientId = userId;
+        } else if (role === 'FREELANCER') {
+            whereClause.freelancerId = userId;
+        }
+
+        const contracts = await prisma.Contracts.findMany({
+            where: whereClause,
+            include: {
+                job: { select: { title: true } },
+                client: { select: { fullName: true } },
+                freelancer: { select: { fullName: true } }
+            }
+        });
+
+        res.status(200).json(contracts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export {
-    addContract
+    addContract,
+    getContracts
 };

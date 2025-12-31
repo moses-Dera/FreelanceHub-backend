@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '../lib/prisma.ts';
 import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import bcrypt from 'bcrypt'
-
-const prisma = new PrismaClient();
 
 const registerUser = async (req,res) =>{
     try {
