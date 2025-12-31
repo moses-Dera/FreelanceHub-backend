@@ -2,10 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { cacheMiddleware } from './middlewares/cache.js';
+import { searchService } from './services/searchService.js';
 import authRoutes from './routes/userRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
 import proposalRoutes from './routes/proposalRoutes.js';
 import contractRoutes from './routes/contractRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
 
 dotenv.config();
 
@@ -68,6 +71,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', cacheMiddleware(300000), jobRoutes); // Cache jobs for 5 minutes
 app.use('/api', cacheMiddleware(180000), proposalRoutes); // Cache proposals for 3 minutes
 app.use('/api/contracts', contractRoutes); // No cache - real-time data
+app.use('/api/payments', paymentRoutes); // No cache - financial data
+app.use('/api/search', cacheMiddleware(60000), searchRoutes); // Cache search for 1 minute
+
+// Initialize search index on startup
+searchService.initializeIndex();
 
 
 if (process.env.NODE_ENV !== 'test') {
