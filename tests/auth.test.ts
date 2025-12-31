@@ -53,12 +53,12 @@ describe('Auth Endpoints', () => {
         // Default mock for jwt.verify (simulate authenticated user for protected routes)
         (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', email: 'test@example.com', role: 'FREELANCER' });
         // Default prisma findUnique response for auth middleware
-        prismaMock.Users.findUnique.mockResolvedValue(mockUser as any);
+        prismaMock.users.findUnique.mockResolvedValue(mockUser as any);
     });
 
     test('POST /api/auth/register should register a new user', async () => {
         (bcrypt.hash as jest.Mock).mockResolvedValue('hashedpassword');
-        prismaMock.Users.create.mockResolvedValue(mockUser as any);
+        prismaMock.users.create.mockResolvedValue(mockUser as any);
 
         const res = await request(app)
             .post('/api/auth/register')
@@ -71,11 +71,11 @@ describe('Auth Endpoints', () => {
 
         expect(res.status).toBe(201);
         expect(res.body).toHaveProperty('message', 'User registered successfully');
-        expect(prismaMock.Users.create).toHaveBeenCalled();
+        expect(prismaMock.users.create).toHaveBeenCalled();
     });
 
     test('POST /api/auth/login should login user', async () => {
-        prismaMock.Users.findUnique.mockResolvedValue(mockUser as any);
+        prismaMock.users.findUnique.mockResolvedValue(mockUser as any);
         (bcrypt.compare as jest.Mock).mockResolvedValue(true);
         (jwt.sign as jest.Mock).mockReturnValue('mockToken');
 
@@ -101,7 +101,7 @@ describe('Auth Endpoints', () => {
     test('POST /api/auth/refresh-token should refresh access token', async () => {
         // Mock jwt.verify to return a valid decoded token
         (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', email: 'test@example.com' });
-        prismaMock.Users.findUnique.mockResolvedValue(mockUser as any);
+        prismaMock.users.findUnique.mockResolvedValue(mockUser as any);
         (jwt.sign as jest.Mock).mockReturnValue('newAccessToken');
 
         const res = await request(app)
@@ -115,8 +115,8 @@ describe('Auth Endpoints', () => {
     test('POST /api/auth/delete/:id should delete user (ADMIN only)', async () => {
         // Override mock for ADMIN role
         (jwt.verify as jest.Mock).mockReturnValue({ userId: '123', email: 'test@example.com', role: 'ADMIN' });
-        prismaMock.Users.findUnique.mockResolvedValue(mockAdmin as any);
-        prismaMock.Users.delete.mockResolvedValue(mockUser as any);
+        prismaMock.users.findUnique.mockResolvedValue(mockAdmin as any);
+        prismaMock.users.delete.mockResolvedValue(mockUser as any);
 
         const res = await request(app)
             .post('/api/auth/delete/123')

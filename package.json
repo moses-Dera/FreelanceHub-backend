@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon --exec tsx server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "npm test -- --watch",
+    "test:coverage": "npm test -- --coverage"
   },
   "keywords": [],
   "author": "Okonkwo Moses",
@@ -34,6 +36,7 @@
     "nodemailer": "^7.0.10",
     "nodemon": "^3.1.11",
     "pg": "^8.16.3",
+    "redis": "^5.10.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },

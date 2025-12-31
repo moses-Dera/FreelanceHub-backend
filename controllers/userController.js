@@ -7,7 +7,7 @@ const registerUser = async (req, res) => {
     try {
         const { fullName, email, password, role } = req.body
         const hashedPassword = await bcrypt.hash(password, 10)
-        const user = await prisma.Users.create({
+        const user = await prisma.users.create({
             data: {
                 fullName,
                 email,
@@ -54,7 +54,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body
-        const user = await prisma.Users.findUnique({
+        const user = await prisma.users.findUnique({
             where: {
                 email
             }
@@ -108,7 +108,7 @@ const refreshToken = async (req, res) => {
             return res.status(401).json({ error: 'Refresh token required' })
         }
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
-        const user = await prisma.Users.findUnique({
+        const user = await prisma.users.findUnique({
             where: {
                 id: decoded.userId
             }
@@ -134,7 +134,7 @@ const refreshToken = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     try {
-        await prisma.Users.delete({
+        await prisma.users.delete({
             where: { id: parseInt(req.params.id) }
         })
         res.status(200).json({ message: 'User deleted successfully' });
