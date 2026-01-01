@@ -4,7 +4,9 @@ import {
     loginUser,
     logoutUser,
     refreshToken,
-    deleteUser
+    deleteUser,
+    getUserProfile,
+    updateUserProfile
 } from '../controllers/userController.js';
 import authorize from '../middlewares/authorize.js';
 
@@ -91,6 +93,8 @@ router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 router.post('/refresh-token', refreshToken);
+router.get('/profile', authorize(), getUserProfile);
+router.put('/profile', authorize(), updateUserProfile);
 router.post('/delete/:id', authorize(['ADMIN']), deleteUser);
 
 export default router;

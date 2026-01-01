@@ -11,7 +11,7 @@ import paymentRoutes from './routes/paymentRoutes.js';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3400;
 
 // CORS configuration with detailed logging
 const corsOptions = {
@@ -24,8 +24,8 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Allow all localhost origins
-    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+    // Allow ANY localhost origin for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       console.log('✅ Allowing localhost origin:', origin);
       return callback(null, true);
     }
@@ -71,8 +71,11 @@ app.use((err, req, res, next) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/jobs', cacheMiddleware(300000), jobRoutes); // Cache jobs for 5 minutes
-app.use('/api', cacheMiddleware(180000), proposalRoutes); // Cache proposals for 3 minutes
+app.use('/api/users', authRoutes);
+// app.use('/api/jobs', cacheMiddleware(300000), jobRoutes); // Cache jobs for 5 minutes - DISABLED for Dev consistency
+app.use('/api/jobs', jobRoutes);
+// app.use('/api', cacheMiddleware(180000), proposalRoutes); // Cache proposals for 3 minutes - DISABLED for Dev consistency
+app.use('/api', proposalRoutes);
 app.use('/api/contracts', contractRoutes); // No cache - real-time data
 app.use('/api/payments', paymentRoutes); // No cache - financial data
 
