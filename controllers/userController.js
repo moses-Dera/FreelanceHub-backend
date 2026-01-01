@@ -5,11 +5,12 @@ import bcrypt from 'bcrypt'
 
 const registerUser = async (req, res) => {
     try {
-        const { fullName, email, password, role } = req.body
+        const { firstName, lastName, email, password, role } = req.body
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await prisma.users.create({
             data: {
-                fullName,
+                firstName,
+                lastName,
                 email,
                 password: hashedPassword,
                 role
@@ -31,7 +32,7 @@ const registerUser = async (req, res) => {
           <div style="font-family: sans-serif; background-color: #f4f4f4; padding: 20px;">
             <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; padding: 20px;">
               <h2 style="text-align: center; color: #333;">Welcome to FreelanceHub!</h2>
-              <p>Hi ${fullName},</p>
+              <p>Hi ${firstName} ${lastName},</p>
               <p>Thank you for registering at FreelanceHub! We're excited to have you on board.</p>
               <p>Best regards,</p>
               <p><strong>The FreelanceHub Team</strong></p>

@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma.ts";
+import { prisma } from '../lib/prisma.ts';
 
 const addJob = async (req, res) => {
     try {

@@ -26,14 +26,13 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/extension-accelerate": "^3.0.1",
     "@types/pg": "^8.16.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "meilisearch": "^0.54.0",
     "nodemailer": "^7.0.10",
     "nodemon": "^3.1.11",
     "pg": "^8.16.3",

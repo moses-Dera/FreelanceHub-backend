@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma.ts";
+import { prisma } from '../lib/prisma.ts';
 
 // POST /jobs/:id/proposals
 const addProposal = async (req, res) => {
