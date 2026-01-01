@@ -97,7 +97,7 @@ const router = express.Router();
 
 
 // routes/proposalRoutes.js
-router.get('/', (req, res) => {
+router.get('/proposals', (req, res) => {
     // Return empty list for now until controller implemented
     // Or better: redirect this logic to getJobProposals or similar if intended
     res.json([])

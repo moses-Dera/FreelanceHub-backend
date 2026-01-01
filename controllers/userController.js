@@ -159,55 +159,58 @@ const getUserProfile = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-    const updateUserProfile = async (req, res) => {
-        try {
-            const userId = req.user.userId;
-            const { firstName, lastName, email } = req.body;
+}
 
-            const updateData = {};
-            if (firstName) updateData.firstName = firstName;
-            if (lastName) updateData.lastName = lastName;
-            if (email) updateData.email = email;
+const updateUserProfile = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { firstName, lastName, email } = req.body;
 
-            const updatedUser = await prisma.users.update({
-                where: { id: userId },
-                data: updateData,
-                select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                    role: true,
-                    rating: true,
-                    walletBalance: true,
-                    createdAt: true
-                }
-            });
+        const updateData = {};
+        if (firstName) updateData.firstName = firstName;
+        if (lastName) updateData.lastName = lastName;
+        if (email) updateData.email = email;
 
-            res.json(updatedUser);
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
+        const updatedUser = await prisma.users.update({
+            where: { id: userId },
+            data: updateData,
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                role: true,
+                rating: true,
+                walletBalance: true,
+                createdAt: true
+            }
+        });
+
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+const deleteUser = async (req, res) => {
+    try {
+        await prisma.users.delete({
+            where: { id: parseInt(req.params.id) }
+        })
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message })
     }
 
-    const deleteUser = async (req, res) => {
-        try {
-            await prisma.users.delete({
-                where: { id: parseInt(req.params.id) }
-            })
-            res.status(200).json({ message: 'User deleted successfully' });
-        } catch (error) {
-            res.status(500).json({ error: error.message })
-        }
-
-    }
+}
 
 
-    export {
-        registerUser,
-        loginUser,
-        logoutUser,
-        refreshToken,
-        deleteUser,
-        getUserProfile
-    }
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshToken,
+    deleteUser,
+    getUserProfile,
+    updateUserProfile
+}
