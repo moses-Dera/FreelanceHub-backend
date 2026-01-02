@@ -2,34 +2,38 @@ import { prisma } from '../lib/prisma.js';
 
 const addJob = async (req, res) => {
     try {
-        const {title, description, clientId, budgetMin, budgetMax,deadline, status} = req.body
+        const { title, description, category, skills, budgetMin, budgetMax, deadline, status } = req.body;
+        const clientId = req.user.userId;
+
         const job = await prisma.jobs.create({
-            data:{
+            data: {
                 title,
                 clientId,
                 description,
-                budgetMin,
-                budgetMax,
-                deadline,
-                status
+                category,
+                skills,
+                budgetMin: String(budgetMin || 0),
+                budgetMax: String(budgetMax || 0),
+                deadline: new Date(deadline),
+                status: status || 'OPEN'
             }
-        })
-        res.status(201).json({message: "Job added successfully", jobId: job.id})
+        });
+        res.status(201).json({ message: "Job added successfully", jobId: job.id });
     } catch (error) {
-        res.status(500).json({error: error.message})
+        res.status(500).json({ error: error.message });
     }
 }
 
 const getSingleJob = async (req, res) => {
     try {
         const job = await prisma.jobs.findUnique({
-            where:{
+            where: {
                 id: parseInt(req.params.id)
             }
         })
         res.status(200).json(job)
     } catch (error) {
-        res.status(500).json({error: error.message})
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -39,9 +43,8 @@ const getJobs = async (req, res) => {
 
         let where = {};
 
-        // If search or filter is provided
         if (search || filter) {
-            const query = search || filter; // use whichever is provided
+            const query = search || filter;
 
             where = {
                 OR: [
@@ -51,17 +54,30 @@ const getJobs = async (req, res) => {
             };
         }
 
-        const jobs = await prisma.jobs.findMany({ where });
+        const jobs = await prisma.jobs.findMany({
+            where,
+            include: {
+                _count: {
+                    select: { proposal: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Flatten structure for frontend convenience if needed, but returning as is is fine.
+        // Prisma returns: { ...job, _count: { proposal: 5 } }
+
         res.status(200).json(jobs);
 
     } catch (error) {
+        console.error("Error fetching jobs:", error);
         res.status(500).json({ error: error.message });
     }
 };
 
 const updateJob = async (req, res) => {
     try {
-        const { title, description, budgetMin, budgetMax, deadline } = req.body;
+        const { title, description, category, skills, budgetMin, budgetMax, deadline, status } = req.body;
         const job = await prisma.jobs.update({
             where: {
                 id: parseInt(req.params.id)
@@ -69,9 +85,12 @@ const updateJob = async (req, res) => {
             data: {
                 title,
                 description,
-                budgetMin,
-                budgetMax,
-                deadline
+                category,
+                skills,
+                budgetMin: String(budgetMin || 0),
+                budgetMax: String(budgetMax || 0),
+                deadline: deadline ? new Date(deadline) : undefined,
+                status // Allow status updates too (e.g. closing a job)
             }
         });
         res.status(200).json({ message: "Job updated successfully", job });
@@ -92,7 +111,6 @@ const deleteJob = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 export {
     addJob,

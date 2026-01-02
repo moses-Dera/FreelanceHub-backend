@@ -6,6 +6,16 @@ import bcrypt from 'bcrypt'
 const registerUser = async (req, res) => {
     try {
         const { firstName, lastName, email, password, role } = req.body
+        
+        // Check if user already exists
+        const existingUser = await prisma.users.findUnique({
+            where: { email }
+        });
+        
+        if (existingUser) {
+            return res.status(400).json({ error: "User with this email already exists" });
+        }
+        
         const hashedPassword = await bcrypt.hash(password, 10)
         const user = await prisma.users.create({
             data: {
@@ -73,7 +83,7 @@ const loginUser = async (req, res) => {
         const token = jwt.sign(
             { userId: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         )
 
         res.json({

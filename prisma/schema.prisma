@@ -6,13 +6,11 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
   output          = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 
@@ -59,6 +57,8 @@ model Jobs {
   client        Users @relation(fields: [clientId], references: [id])  
   title         String    
   description   String
+  category      String?
+  skills        String[]
   budgetMin     String
   budgetMax     String
   status        jobStatus @default(OPEN)
