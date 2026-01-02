@@ -26,14 +26,34 @@ const addJob = async (req, res) => {
 
 const getSingleJob = async (req, res) => {
     try {
+        const jobId = parseInt(req.params.id);
+
+        if (isNaN(jobId)) {
+            return res.status(400).json({
+                error: "Invalid job ID. ID must be a number.",
+                receivedId: req.params.id
+            });
+        }
+
         const job = await prisma.jobs.findUnique({
-            where: {
-                id: parseInt(req.params.id)
+            where: { id: jobId },
+            include: {
+                client: {
+                    select: { id: true, firstName: true, lastName: true, email: true }
+                },
+                _count: {
+                    select: { proposal: true }
+                }
             }
-        })
-        res.status(200).json(job)
+        });
+
+        if (!job) {
+            return res.status(404).json({ error: "Job not found" });
+        }
+
+        res.status(200).json(job);
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        res.status(500).json({ error: error.message });
     }
 }
 
