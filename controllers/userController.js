@@ -1,153 +1,87 @@
 import { prisma } from '../lib/prisma.js';
-import jwt from 'jsonwebtoken'
-import nodemailer from 'nodemailer'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-const registerUser = async (req, res) => {
+const register = async (req, res) => {
     try {
-        const { firstName, lastName, email, password, role } = req.body
-        
-        // Check if user already exists
-        const existingUser = await prisma.users.findUnique({
-            where: { email }
-        });
-        
-        if (existingUser) {
-            return res.status(400).json({ error: "User with this email already exists" });
-        }
-        
-        const hashedPassword = await bcrypt.hash(password, 10)
+        const { fullName, email, password, role } = req.body;
+
+        // Split fullName into firstName and lastName
+        const [firstName, ...lastNameParts] = fullName.split(' ');
+        const lastName = lastNameParts.join(' ') || '';
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = await prisma.users.create({
             data: {
                 firstName,
                 lastName,
                 email,
                 password: hashedPassword,
-                role
-            }
-        });
-        res.status(201).json({ message: "User registered successfully", userId: user.id })
-
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT,
-            secure: false,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
+                role: role || 'CLIENT'
             }
         });
 
-        const emailHtml = `
-          <div style="font-family: sans-serif; background-color: #f4f4f4; padding: 20px;">
-            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; padding: 20px;">
-              <h2 style="text-align: center; color: #333;">Welcome to FreelanceHub!</h2>
-              <p>Hi ${firstName} ${lastName},</p>
-              <p>Thank you for registering at FreelanceHub! We're excited to have you on board.</p>
-              <p>Best regards,</p>
-              <p><strong>The FreelanceHub Team</strong></p>
-            </div>
-          </div>
-        `;
-
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Welcome to FreelanceHub!',
-            html: emailHtml
+        res.status(201).json({
+            message: "User registered successfully",
+            userId: user.id
         });
-
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-}
-
-const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body
-        const user = await prisma.users.findUnique({
-            where: {
-                email
-            }
-        });
-        if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' })
-        }
-
-        const isPasswordValid = await bcrypt.compare(password, user.password)
-
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        )
-
-        res.json({
-            message: 'Login successful',
-            token,
-            user: {
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email
-            }
-        })
-
-
-
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-}
-
-const logoutUser = async (req, res) => {
-    try {
-        res.json({ message: 'Logout successful' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-}
+};
 
-const refreshToken = async (req, res) => {
+const login = async (req, res) => {
     try {
-        const { refreshToken } = req.body
+        const { email, password } = req.body;
 
-        if (!refreshToken) {
-            return res.status(401).json({ error: 'Refresh token required' })
-        }
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
         const user = await prisma.users.findUnique({
-            where: {
-                id: decoded.userId
-            }
-        })
+            where: { email }
+        });
 
         if (!user) {
-            return res.status(401).json({ error: 'User not found' })
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
-        const newAccessToken = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: '15m' }
-        )
+        const isValidPassword = await bcrypt.compare(password, user.password);
+
+        if (!isValidPassword) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { userId: user.id, role: user.role },
+            process.env.JWT_SECRET || 'your-secret-key',
+            { expiresIn: '7d' }
+        );
 
         res.json({
-            accessToken: newAccessToken
-        })
+            message: "Login successful",
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role
+            }
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        res.status(500).json({ error: error.message });
     }
-}
+};
 
+const logout = async (req, res) => {
+    // Since we're using JWT, logout is handled client-side by removing the token
+    res.json({ message: "Logout successful" });
+};
 
-const getUserProfile = async (req, res) => {
+const getProfile = async (req, res) => {
     try {
-        const userId = req.user.userId; // From authorize middleware
+        const userId = req.user.userId;
+
         const user = await prisma.users.findUnique({
             where: { id: userId },
             select: {
@@ -163,28 +97,26 @@ const getUserProfile = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: "User not found" });
         }
 
         res.json(user);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-}
+};
 
-const updateUserProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { firstName, lastName, email } = req.body;
-
-        const updateData = {};
-        if (firstName) updateData.firstName = firstName;
-        if (lastName) updateData.lastName = lastName;
-        if (email) updateData.email = email;
+        const { firstName, lastName } = req.body;
 
         const updatedUser = await prisma.users.update({
             where: { id: userId },
-            data: updateData,
+            data: {
+                ...(firstName && { firstName }),
+                ...(lastName && { lastName })
+            },
             select: {
                 id: true,
                 firstName: true,
@@ -192,36 +124,14 @@ const updateUserProfile = async (req, res) => {
                 email: true,
                 role: true,
                 rating: true,
-                walletBalance: true,
-                createdAt: true
+                walletBalance: true
             }
         });
 
-        res.json(updatedUser);
+        res.json({ message: "Profile updated successfully", user: updatedUser });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-}
+};
 
-const deleteUser = async (req, res) => {
-    try {
-        await prisma.users.delete({
-            where: { id: req.params.id }
-        })
-        res.status(200).json({ message: 'User deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ error: error.message })
-    }
-
-}
-
-
-export {
-    registerUser,
-    loginUser,
-    logoutUser,
-    refreshToken,
-    deleteUser,
-    getUserProfile,
-    updateUserProfile
-}
+export { register, login, logout, getProfile, updateProfile };
