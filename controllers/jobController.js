@@ -77,10 +77,19 @@ const getJobs = async (req, res) => {
 
 const updateJob = async (req, res) => {
     try {
+        const jobId = parseInt(req.params.id);
+
+        if (isNaN(jobId)) {
+            return res.status(400).json({
+                error: "Invalid job ID. ID must be a number.",
+                receivedId: req.params.id
+            });
+        }
+
         const { title, description, category, skills, budgetMin, budgetMax, deadline, status } = req.body;
         const job = await prisma.jobs.update({
             where: {
-                id: parseInt(req.params.id)
+                id: jobId
             },
             data: {
                 title,
@@ -101,10 +110,17 @@ const updateJob = async (req, res) => {
 
 const deleteJob = async (req, res) => {
     try {
+        const jobId = parseInt(req.params.id);
+
+        if (isNaN(jobId)) {
+            return res.status(400).json({
+                error: "Invalid job ID. ID must be a number.",
+                receivedId: req.params.id
+            });
+        }
+
         await prisma.jobs.delete({
-            where: {
-                id: parseInt(req.params.id)
-            }
+            where: { id: jobId }
         });
         res.status(200).json({ message: "Job deleted successfully" });
     } catch (error) {
