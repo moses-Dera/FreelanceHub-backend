@@ -12,7 +12,5 @@ router.post('/logout', logout);
 // Profile routes (authorization required)
 router.get('/profile', authorize(), getProfile);
 router.put('/profile', authorize(), updateProfile);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
 
 export default router;

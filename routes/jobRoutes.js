@@ -76,11 +76,8 @@ const router = express.Router();
 
 router.post('/', authorize(['ADMIN', 'CLIENT']), addJob);
 router.get('/:id', getSingleJob);
-router.get('/', getJobs);
+router.get('/', authorize(), getJobs);
 router.put('/:id', authorize(['ADMIN', 'CLIENT']), updateJob);
 router.delete('/:id', authorize(['ADMIN', 'CLIENT']), deleteJob);
-
-// POST /api/jobs/:id/save - Toggle save/unsave a job
-router.post('/:id/save', authorize(['FREELANCER']), toggleSavedJob);
 
 export default router;

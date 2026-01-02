@@ -97,6 +97,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api', proposalRoutes);
 app.use('/api/contracts', contractRoutes); // No cache - real-time data
 app.use('/api/payments', paymentRoutes); // No cache - financial data
+console.log('Mounting /api/notifications...');
 app.use('/api/notifications', notificationRoutes);
 
 

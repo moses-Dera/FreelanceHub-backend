@@ -44,14 +44,7 @@ const getSingleJob = async (req, res) => {
                 },
                 _count: {
                     select: { proposal: true }
-                },
-                // Check if saved by current user
-                ...(userId ? {
-                    savedBy: {
-                        where: { userId },
-                        select: { id: true } // Just check existence
-                    }
-                } : {})
+                }
             }
         });
 
@@ -59,14 +52,7 @@ const getSingleJob = async (req, res) => {
             return res.status(404).json({ error: "Job not found" });
         }
 
-        // Add isSaved boolean to response
-        const jobWithSavedStatus = {
-            ...job,
-            isSaved: job.savedBy ? job.savedBy.length > 0 : false,
-            savedBy: undefined // cleanup
-        };
-
-        res.status(200).json(jobWithSavedStatus);
+        res.status(200).json(job);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -129,26 +115,12 @@ const getJobs = async (req, res) => {
             include: {
                 _count: {
                     select: { proposal: true }
-                },
-                // Check if saved by current user
-                ...(userId ? {
-                    savedBy: {
-                        where: { userId },
-                        select: { id: true }
-                    }
-                } : {})
+                }
             },
             orderBy: orderBy
         });
 
-        // Add isSaved boolean to response
-        const jobsWithSavedStatus = jobs.map(job => ({
-            ...job,
-            isSaved: job.savedBy ? job.savedBy.length > 0 : false,
-            savedBy: undefined // cleanup
-        }));
-
-        res.status(200).json(jobsWithSavedStatus);
+        res.status(200).json(jobs);
 
     } catch (error) {
         console.error("Error fetching jobs:", error);
