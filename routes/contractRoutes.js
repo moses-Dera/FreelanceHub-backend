@@ -1,5 +1,5 @@
 import express from 'express';
-import { addContract, getContracts } from '../controllers/contractController.js';
+import { addContract, getContracts, getContractById } from '../controllers/contractController.js';
 import authorize from '../middlewares/authorize.js';
 
 const router = express.Router();
@@ -63,5 +63,8 @@ router.post('/', authorize(), addContract);
 
 // GET /api/contracts - Get contracts for user (Authenticated)
 router.get('/', authorize(), getContracts);
+
+// GET /api/contracts/:id - Get contract details
+router.get('/:id', authorize(), getContractById);
 
 export default router;

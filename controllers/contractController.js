@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma.js";
 const addContract = async (req, res) => {
     try {
         const { userId } = req.user; // Client ID from auth
-        const { 
+        const {
             proposalId,
             jobId,
             freelancerId,
@@ -57,9 +57,9 @@ const addContract = async (req, res) => {
             data: { status: "ASSIGNED" }
         });
 
-        res.status(201).json({ 
-            message: "Contract created successfully", 
-            contract 
+        res.status(201).json({
+            message: "Contract created successfully",
+            contract
         });
 
     } catch (error) {
@@ -94,7 +94,42 @@ const getContracts = async (req, res) => {
     }
 };
 
+const getContractById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId, role } = req.user;
+
+        const contract = await prisma.contracts.findUnique({
+            where: { id: parseInt(id) },
+            include: {
+                job: true,
+                client: { select: { id: true, firstName: true, lastName: true, email: true } },
+                freelancer: { select: { id: true, firstName: true, lastName: true, email: true } },
+                milestones: true,
+                payments: true
+            }
+        });
+
+        if (!contract) {
+            return res.status(404).json({ error: "Contract not found" });
+        }
+
+        // Access control
+        if (role === 'CLIENT' && contract.clientId !== userId) {
+            return res.status(403).json({ error: "Not authorized" });
+        }
+        if (role === 'FREELANCER' && contract.freelancerId !== userId) {
+            return res.status(403).json({ error: "Not authorized" });
+        }
+
+        res.json(contract);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export {
     addContract,
-    getContracts
+    getContracts,
+    getContractById
 };
