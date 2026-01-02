@@ -27,6 +27,7 @@ model Users {
   lastName       String
   email          String @unique
   password       String 
+  companyName    String?
   role           Role   @default(FREELANCER) 
   rating         Int?   @default(0)
   walletBalance  Int?   @default(0)

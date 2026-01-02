@@ -4,19 +4,39 @@ import jwt from 'jsonwebtoken';
 
 const register = async (req, res) => {
     try {
-        const { fullName, email, password, role } = req.body;
+        const { firstName, lastName, fullName, email, password, role } = req.body;
 
-        // Split fullName into firstName and lastName
-        const [firstName, ...lastNameParts] = fullName.split(' ');
-        const lastName = lastNameParts.join(' ') || '';
+        // Support both formats: firstName/lastName OR fullName
+        let first = firstName;
+        let last = lastName;
+
+        if (!first && fullName && typeof fullName === 'string') {
+            // If fullName is provided instead, split it
+            const nameParts = fullName.trim().split(' ');
+            first = nameParts[0];
+            last = nameParts.slice(1).join(' ') || '';
+        }
+
+        // Validate required fields
+        if (!first || !email || !password) {
+            return res.status(400).json({
+                error: "Please fill in all required fields."
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                error: "Password must be at least 6 characters long."
+            });
+        }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await prisma.users.create({
             data: {
-                firstName,
-                lastName,
+                firstName: first,
+                lastName: last || '',
                 email,
                 password: hashedPassword,
                 role: role || 'CLIENT'
@@ -24,11 +44,22 @@ const register = async (req, res) => {
         });
 
         res.status(201).json({
-            message: "User registered successfully",
+            message: "Account created successfully!",
             userId: user.id
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Registration error:", error);
+
+        // Handle duplicate email error
+        if (error.code === 'P2002') {
+            return res.status(400).json({
+                error: "An account with this email already exists. Please log in instead."
+            });
+        }
+
+        res.status(500).json({
+            error: "Unable to create account. Please try again later."
+        });
     }
 };
 
@@ -41,13 +72,13 @@ const login = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(404).json({ error: "No account found with this email address. Please register first." });
         }
 
         const isValidPassword = await bcrypt.compare(password, user.password);
 
         if (!isValidPassword) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({ error: "Incorrect password. Please try again." });
         }
 
         // Generate JWT token
@@ -90,6 +121,7 @@ const getProfile = async (req, res) => {
                 lastName: true,
                 email: true,
                 role: true,
+                companyName: true,
                 rating: true,
                 walletBalance: true,
                 createdAt: true
@@ -109,13 +141,14 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { firstName, lastName } = req.body;
+        const { firstName, lastName, companyName } = req.body;
 
         const updatedUser = await prisma.users.update({
             where: { id: userId },
             data: {
                 ...(firstName && { firstName }),
-                ...(lastName && { lastName })
+                ...(lastName && { lastName }),
+                ...(companyName !== undefined && { companyName })
             },
             select: {
                 id: true,
@@ -123,6 +156,7 @@ const updateProfile = async (req, res) => {
                 lastName: true,
                 email: true,
                 role: true,
+                companyName: true,
                 rating: true,
                 walletBalance: true
             }

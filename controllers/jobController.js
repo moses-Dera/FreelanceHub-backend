@@ -60,18 +60,26 @@ const getSingleJob = async (req, res) => {
 const getJobs = async (req, res) => {
     try {
         const { search, filter } = req.query;
+        const { userId, role } = req.user || {};
 
         let where = {};
 
+        // If user is a CLIENT, only show their own jobs
+        if (role === 'CLIENT' && userId) {
+            where.clientId = userId;
+        }
+        // If user is a FREELANCER, show all jobs (no filter)
+        // If no user (public), show all jobs
+
         if (search || filter) {
             const query = search || filter;
-
-            where = {
+            const searchConditions = {
                 OR: [
                     { title: { contains: query, mode: "insensitive" } },
                     { description: { contains: query, mode: "insensitive" } },
                 ],
             };
+            where = { ...where, ...searchConditions };
         }
 
         const jobs = await prisma.jobs.findMany({
@@ -83,9 +91,6 @@ const getJobs = async (req, res) => {
             },
             orderBy: { createdAt: 'desc' }
         });
-
-        // Flatten structure for frontend convenience if needed, but returning as is is fine.
-        // Prisma returns: { ...job, _count: { proposal: 5 } }
 
         res.status(200).json(jobs);
 
