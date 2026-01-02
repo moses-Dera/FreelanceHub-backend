@@ -168,6 +168,10 @@ const updateProfile = async (req, res) => {
     }
 };
 
+import sendEmail from '../utils/email.js';
+
+// ... imports
+
 const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -191,8 +195,22 @@ const forgotPassword = async (req, res) => {
             }
         });
 
-        // Mock Email Service
-        console.log(`[EMAIL MOCK] Password Reset Link for ${email}: http://localhost:3000/reset-password?token=${resetToken}`);
+        // Send Email via Microservice
+        const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+        await sendEmail({
+            to: email,
+            subject: 'Password Reset Request - FreelanceHub',
+            text: `You requested a password reset. Click here to reset your password: ${resetUrl}`,
+            html: `
+                <h3>Password Reset Request</h3>
+                <p>You requested a password reset for your FreelanceHub account.</p>
+                <p>Click the link below to reset your password:</p>
+                <a href="${resetUrl}">${resetUrl}</a>
+                <p>If you didn't request this, please ignore this email.</p>
+            `
+        });
+
+        console.log(`[EMAIL SENT] Password Reset Link for ${email}`);
 
         res.json({ message: "If an account with that email exists, we sent you a reset link." });
     } catch (error) {
