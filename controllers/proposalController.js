@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.ts';
+import { prisma } from '../lib/prisma.js';
 
 // POST /jobs/:id/proposals
 const addProposal = async (req, res) => {
@@ -13,7 +13,7 @@ const addProposal = async (req, res) => {
             attachments
         } = req.body;
         
-        const proposal = await prisma.Proposals.create({
+        const proposal = await prisma.proposals.create({
             data:{
                 jobId: parseInt(jobId),
                 userId,
@@ -35,11 +35,11 @@ const addProposal = async (req, res) => {
 const getJobProposals = async (req, res) => {
     try {
         const { id: jobId } = req.params;
-        const proposals = await prisma.Proposals.findMany({
+        const proposals = await prisma.proposals.findMany({
             where: { jobId: parseInt(jobId) },
             include: {
                 user: {
-                    select: { id: true, fullName: true, email: true, rating: true }
+                    select: { id: true, firstName: true, lastName: true, email: true, rating: true }
                 }
             }
         });
@@ -53,11 +53,11 @@ const getJobProposals = async (req, res) => {
 const getProposal = async (req, res) => {
     try {
         const { id } = req.params;
-        const proposal = await prisma.Proposals.findUnique({
+        const proposal = await prisma.proposals.findUnique({
             where: { id },
             include: {
                 user: {
-                    select: { id: true, fullName: true, email: true, rating: true }
+                    select: { id: true, firstName: true, lastName: true, email: true, rating: true }
                 },
                 job: {
                     select: { id: true, title: true, description: true, budgetMin: true, budgetMax: true }

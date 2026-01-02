@@ -1,9 +1,9 @@
-import { prisma } from '../lib/prisma.ts';
+import { prisma } from '../lib/prisma.js';
 
 const addJob = async (req, res) => {
     try {
         const {title, description, clientId, budgetMin, budgetMax,deadline, status} = req.body
-        const job = await prisma.Jobs.create({
+        const job = await prisma.jobs.create({
             data:{
                 title,
                 clientId,
@@ -22,7 +22,7 @@ const addJob = async (req, res) => {
 
 const getSingleJob = async (req, res) => {
     try {
-        const job = await prisma.Jobs.findUnique({
+        const job = await prisma.jobs.findUnique({
             where:{
                 id: parseInt(req.params.id)
             }
@@ -51,7 +51,7 @@ const getJobs = async (req, res) => {
             };
         }
 
-        const jobs = await prisma.Jobs.findMany({ where });
+        const jobs = await prisma.jobs.findMany({ where });
         res.status(200).json(jobs);
 
     } catch (error) {
@@ -62,7 +62,7 @@ const getJobs = async (req, res) => {
 const updateJob = async (req, res) => {
     try {
         const { title, description, budgetMin, budgetMax, deadline } = req.body;
-        const job = await prisma.Jobs.update({
+        const job = await prisma.jobs.update({
             where: {
                 id: parseInt(req.params.id)
             },
@@ -82,7 +82,7 @@ const updateJob = async (req, res) => {
 
 const deleteJob = async (req, res) => {
     try {
-        await prisma.Jobs.delete({
+        await prisma.jobs.delete({
             where: {
                 id: parseInt(req.params.id)
             }

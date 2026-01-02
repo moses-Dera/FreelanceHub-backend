@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.ts';
+import { prisma } from '../lib/prisma.js';
 
 // POST /payments/fund-wallet
 const fundWallet = async (req, res) => {
@@ -9,7 +9,7 @@ const fundWallet = async (req, res) => {
         // Create payment record
         const payment = await prisma.payments.create({
             data: {
-                contractId: null, // Wallet funding doesn't need contract
+                contractId: 1, // Temporary contract ID for wallet funding
                 userId,
                 amount: parseInt(amount),
                 type: "DEPOSIT",
@@ -57,7 +57,7 @@ const withdrawFunds = async (req, res) => {
         // Create withdrawal record
         const payment = await prisma.payments.create({
             data: {
-                contractId: null,
+                contractId: 1, // Temporary contract ID for withdrawal
                 userId,
                 amount: parseInt(amount),
                 type: "WITHDRAWAL",

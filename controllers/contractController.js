@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma.ts";
+import { prisma } from "../lib/prisma.js";
 
 // POST /contracts - Create contract from accepted proposal
 const addContract = async (req, res) => {
@@ -13,7 +13,7 @@ const addContract = async (req, res) => {
         } = req.body;
 
         // Verify the proposal exists and belongs to this job
-        const proposal = await prisma.Proposals.findUnique({
+        const proposal = await prisma.proposals.findUnique({
             where: { id: proposalId },
             include: { job: true }
         });
@@ -28,29 +28,31 @@ const addContract = async (req, res) => {
         }
 
         // Create the contract
-        const contract = await prisma.Contracts.create({
+        const contract = await prisma.contracts.create({
             data: {
                 jobId: parseInt(jobId),
                 clientId: userId,
                 freelancerId,
+                amount: proposal.expectedSalary || 0,
+                deadline: proposal.job.deadline,
                 startDate: new Date(startDate),
                 endDate: new Date(endDate)
             },
             include: {
                 job: { select: { title: true } },
-                client: { select: { fullName: true } },
-                freelancer: { select: { fullName: true } }
+                client: { select: { firstName: true, lastName: true } },
+                freelancer: { select: { firstName: true, lastName: true } }
             }
         });
 
         // Update proposal status to ACCEPTED
-        await prisma.Proposals.update({
+        await prisma.proposals.update({
             where: { id: proposalId },
             data: { status: "ACCEPTED" }
         });
 
         // Update job status to ASSIGNED
-        await prisma.Jobs.update({
+        await prisma.jobs.update({
             where: { id: parseInt(jobId) },
             data: { status: "ASSIGNED" }
         });
@@ -77,12 +79,12 @@ const getContracts = async (req, res) => {
             whereClause.freelancerId = userId;
         }
 
-        const contracts = await prisma.Contracts.findMany({
+        const contracts = await prisma.contracts.findMany({
             where: whereClause,
             include: {
                 job: { select: { title: true } },
-                client: { select: { fullName: true } },
-                freelancer: { select: { fullName: true } }
+                client: { select: { firstName: true, lastName: true } },
+                freelancer: { select: { firstName: true, lastName: true } }
             }
         });
 

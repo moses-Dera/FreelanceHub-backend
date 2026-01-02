@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.ts';
+import { prisma } from '../lib/prisma.js';
 import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import bcrypt from 'bcrypt'
@@ -71,7 +71,7 @@ const loginUser = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { userId: user.id, email: user.email },
+            { userId: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         )
@@ -81,7 +81,8 @@ const loginUser = async (req, res) => {
             token,
             user: {
                 id: user.id,
-                fullName: user.fullName,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email
             }
         })
@@ -120,7 +121,7 @@ const refreshToken = async (req, res) => {
         }
 
         const newAccessToken = jwt.sign(
-            { userId: user.id, email: user.email },
+            { userId: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '15m' }
         )
@@ -195,7 +196,7 @@ const updateUserProfile = async (req, res) => {
 const deleteUser = async (req, res) => {
     try {
         await prisma.users.delete({
-            where: { id: parseInt(req.params.id) }
+            where: { id: req.params.id }
         })
         res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {

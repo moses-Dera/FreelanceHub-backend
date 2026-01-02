@@ -97,13 +97,13 @@ const router = express.Router();
 
 
 // routes/proposalRoutes.js
-router.get('/proposals', (req, res) => {
+router.get('/proposals', authorize(), (req, res) => {
     // Return empty list for now until controller implemented
     // Or better: redirect this logic to getJobProposals or similar if intended
     res.json([])
 });
-router.post('/jobs/:id/proposals', addProposal);
-router.get('/jobs/:id/proposals', getJobProposals);
-router.get('/proposals/:id', getProposal);
+router.post('/jobs/:id/proposals', authorize(['FREELANCER']), addProposal); // Only Freelancers can submit
+router.get('/jobs/:id/proposals', authorize(['CLIENT', 'ADMIN', 'FREELANCER']), getJobProposals);
+router.get('/proposals/:id', authorize(), getProposal);
 
 export default router;

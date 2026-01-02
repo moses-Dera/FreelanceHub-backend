@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { cacheMiddleware } from './middlewares/cache.js';
 import authRoutes from './routes/userRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
@@ -11,7 +13,22 @@ import paymentRoutes from './routes/paymentRoutes.js';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3400;
+const port = process.env.PORT || 4000;
+
+// Security Middleware
+app.use(helmet());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply rate limiter to all requests
+app.use(limiter);
 
 // CORS configuration with detailed logging
 const corsOptions = {
