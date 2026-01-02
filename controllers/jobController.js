@@ -27,6 +27,7 @@ const addJob = async (req, res) => {
 const getSingleJob = async (req, res) => {
     try {
         const jobId = parseInt(req.params.id);
+        const { userId } = req.user || {};
 
         if (isNaN(jobId)) {
             return res.status(400).json({
@@ -43,7 +44,14 @@ const getSingleJob = async (req, res) => {
                 },
                 _count: {
                     select: { proposal: true }
-                }
+                },
+                // Check if saved by current user
+                ...(userId ? {
+                    savedBy: {
+                        where: { userId },
+                        select: { id: true } // Just check existence
+                    }
+                } : {})
             }
         });
 
@@ -51,7 +59,14 @@ const getSingleJob = async (req, res) => {
             return res.status(404).json({ error: "Job not found" });
         }
 
-        res.status(200).json(job);
+        // Add isSaved boolean to response
+        const jobWithSavedStatus = {
+            ...job,
+            isSaved: job.savedBy ? job.savedBy.length > 0 : false,
+            savedBy: undefined // cleanup
+        };
+
+        res.status(200).json(jobWithSavedStatus);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -59,40 +74,81 @@ const getSingleJob = async (req, res) => {
 
 const getJobs = async (req, res) => {
     try {
-        const { search, filter } = req.query;
+        const { search, filter, tab } = req.query; // Added tab
         const { userId, role } = req.user || {};
 
         let where = {};
+        let orderBy = { createdAt: 'desc' }; // Default
 
         // If user is a CLIENT, only show their own jobs
         if (role === 'CLIENT' && userId) {
             where.clientId = userId;
         }
-        // If user is a FREELANCER, show all jobs (no filter)
-        // If no user (public), show all jobs
 
-        if (search || filter) {
-            const query = search || filter;
+        // Search Logic
+        if (search) {
+            const query = search;
             const searchConditions = {
                 OR: [
                     { title: { contains: query, mode: "insensitive" } },
                     { description: { contains: query, mode: "insensitive" } },
+                    { category: { contains: query, mode: "insensitive" } },
+                    { skills: { hasSome: [query] } } // Exact match for skill tags roughly
                 ],
             };
             where = { ...where, ...searchConditions };
         }
+
+        // Tab Filtering Logic
+        if (tab === 'Saved Jobs' && userId) {
+            where.savedBy = {
+                some: { userId: userId }
+            };
+        } else if (tab === 'Best Match' && userId) {
+            // "Best Match" logic:
+            // Ideally, match user skills with job skills.
+            // For now, let's keep it simple: no filter (shows all), but if we had user skills we could filter.
+            // A true "Best Match" sort is harder to do in DB without full text search engine.
+            // We'll mimic it by fetching user skills and filtering/sorting locally or partially here.
+
+            // Fetch User Skills first
+            const user = await prisma.users.findUnique({ where: { id: userId }, select: { skills: true } });
+            if (user && user.skills.length > 0) {
+                where.skills = { hasSome: user.skills };
+            }
+        }
+
+        // Handle filter query param (e.g. from generic filter button)
+        if (filter) {
+            // Example generic filter logic if needed
+        }
+
 
         const jobs = await prisma.jobs.findMany({
             where,
             include: {
                 _count: {
                     select: { proposal: true }
-                }
+                },
+                // Check if saved by current user
+                ...(userId ? {
+                    savedBy: {
+                        where: { userId },
+                        select: { id: true }
+                    }
+                } : {})
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: orderBy
         });
 
-        res.status(200).json(jobs);
+        // Add isSaved boolean to response
+        const jobsWithSavedStatus = jobs.map(job => ({
+            ...job,
+            isSaved: job.savedBy ? job.savedBy.length > 0 : false,
+            savedBy: undefined // cleanup
+        }));
+
+        res.status(200).json(jobsWithSavedStatus);
 
     } catch (error) {
         console.error("Error fetching jobs:", error);
@@ -153,10 +209,58 @@ const deleteJob = async (req, res) => {
     }
 };
 
+const toggleSavedJob = async (req, res) => {
+    try {
+        const jobId = parseInt(req.params.id);
+        const { userId } = req.user;
+
+        if (isNaN(jobId)) {
+            return res.status(400).json({ error: "Invalid job ID" });
+        }
+
+        // Check if already saved
+        const existingSave = await prisma.savedJobs.findUnique({
+            where: {
+                userId_jobId: {
+                    userId,
+                    jobId
+                }
+            }
+        });
+
+        if (existingSave) {
+            // Unsave
+            await prisma.savedJobs.delete({
+                where: {
+                    userId_jobId: {
+                        userId,
+                        jobId
+                    }
+                }
+            });
+            return res.json({ message: "Job removed from saved", isSaved: false });
+        } else {
+            // Save
+            await prisma.savedJobs.create({
+                data: {
+                    userId,
+                    jobId
+                }
+            });
+            return res.json({ message: "Job saved", isSaved: true });
+        }
+
+    } catch (error) {
+        console.error("Error toggling saved job:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export {
     addJob,
     getSingleJob,
     getJobs,
     updateJob,
-    deleteJob
+    deleteJob,
+    toggleSavedJob
 };

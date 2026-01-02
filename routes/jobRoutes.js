@@ -80,4 +80,7 @@ router.get('/', getJobs);
 router.put('/:id', authorize(['ADMIN', 'CLIENT']), updateJob);
 router.delete('/:id', authorize(['ADMIN', 'CLIENT']), deleteJob);
 
+// POST /api/jobs/:id/save - Toggle save/unsave a job
+router.post('/:id/save', authorize(['FREELANCER']), toggleSavedJob);
+
 export default router;

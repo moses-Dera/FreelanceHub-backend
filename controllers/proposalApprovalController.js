@@ -53,6 +53,19 @@ export const approveProposal = async (req, res) => {
             data: { status: 'ASSIGNED' }
         });
 
+        // Notify Freelancer
+        await prisma.notifications.create({
+            data: {
+                userId: proposal.userId, // Freelancer
+                type: 'CONTRACT_CREATED',
+                payload: {
+                    jobId: proposal.jobId,
+                    contractId: contract.id,
+                    clientName: `${req.user.firstName} ${req.user.lastName}`
+                }
+            }
+        });
+
         res.json({
             message: "Proposal approved and contract created",
             proposal: updatedProposal,

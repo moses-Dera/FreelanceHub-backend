@@ -10,6 +10,7 @@ import jobRoutes from './routes/jobRoutes.js';
 import proposalRoutes from './routes/proposalRoutes.js';
 import contractRoutes from './routes/contractRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 dotenv.config();
 
@@ -96,6 +97,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api', proposalRoutes);
 app.use('/api/contracts', contractRoutes); // No cache - real-time data
 app.use('/api/payments', paymentRoutes); // No cache - financial data
+app.use('/api/notifications', notificationRoutes);
 
 
 if (process.env.NODE_ENV !== 'test') {

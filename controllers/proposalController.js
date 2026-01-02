@@ -33,6 +33,20 @@ export const addProposal = async (req, res) => {
             }
         });
 
+        // Notify Client
+        await prisma.notifications.create({
+            data: {
+                userId: job.clientId,
+                type: 'PROPOSAL_RECEIVED',
+                payload: {
+                    jobId: job.id,
+                    jobTitle: job.title,
+                    proposalId: proposal.id,
+                    freelancerId: userId
+                }
+            }
+        });
+
         res.status(201).json(proposal);
     } catch (error) {
         console.error(error);
