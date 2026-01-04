@@ -26,6 +26,8 @@ model Users {
   email            String   @unique
   password         String
   companyName      String?
+  phone            String?  // Added phone field
+  location         String?  // Added location field
   role             Role     @default(FREELANCER)
   rating           Int?     @default(0)
   walletBalance    Int?     @default(0)

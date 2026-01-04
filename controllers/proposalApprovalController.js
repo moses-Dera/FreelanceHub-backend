@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import sendEmail from '../utils/email.js';
 
 // PUT /proposals/:id/approve (CLIENT ONLY)
 export const approveProposal = async (req, res) => {
@@ -6,10 +7,13 @@ export const approveProposal = async (req, res) => {
         const { id } = req.params;
         const { userId } = req.user;
 
-        // Find the proposal with job details
+        // Find the proposal with job details and freelancer details
         const proposal = await prisma.proposals.findUnique({
             where: { id },
-            include: { job: true }
+            include: {
+                job: true,
+                user: { select: { email: true, firstName: true } }
+            }
         });
 
         if (!proposal) return res.status(404).json({ error: "Proposal not found" });
@@ -65,6 +69,25 @@ export const approveProposal = async (req, res) => {
                 }
             }
         });
+
+        // Send Email to Freelancer
+        if (proposal.user && proposal.user.email) {
+            await sendEmail({
+                to: proposal.user.email,
+                subject: `Proposal Accepted: ${proposal.job.title}`,
+                text: `Congratulations! Your proposal for "${proposal.job.title}" has been accepted. Log in to start working.`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #16a34a;">Proposal Accepted!</h2>
+                        <p>Hi ${proposal.user.firstName},</p>
+                        <p>Congratulations! Your proposal for "<strong>${proposal.job.title}</strong>" has been accepted.</p>
+                        <p>A new contract has been created. Log in to your dashboard to view the details.</p>
+                        <br>
+                        <a href="${process.env.frontend_url || 'http://localhost:3000'}/dashboard/freelancer/contracts" style="background-color: #16a34a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Contract</a>
+                    </div>
+                `
+            });
+        }
 
         res.json({
             message: "Proposal approved and contract created",

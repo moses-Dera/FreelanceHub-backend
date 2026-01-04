@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma.js';
+import sendEmail from '../utils/email.js';
 
 // POST /jobs/:id/proposals
 export const addProposal = async (req, res) => {
@@ -8,7 +9,10 @@ export const addProposal = async (req, res) => {
         const { coverLetter, expectedSalary, resumeUrl, portfolioLinks, attachments } = req.body;
 
         // Check if job exists
-        const job = await prisma.jobs.findUnique({ where: { id: parseInt(jobId) } });
+        const job = await prisma.jobs.findUnique({
+            where: { id: parseInt(jobId) },
+            include: { client: { select: { email: true } } }
+        });
         if (!job) return res.status(404).json({ error: "Job not found" });
 
         // Check if job is open
@@ -46,6 +50,25 @@ export const addProposal = async (req, res) => {
                 }
             }
         });
+
+        // Send Email to Client
+        if (job.client && job.client.email) {
+            await sendEmail({
+                to: job.client.email,
+                subject: `New Proposal for ${job.title}`,
+                text: `You have received a new proposal for your job "${job.title}". Log in to view details.`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #2563eb;">New Proposal Received!</h2>
+                        <p>Hi,</p>
+                        <p>You have received a new proposal for your job "<strong>${job.title}</strong>".</p>
+                        <p>Log in to your dashboard to review the proposal and candidate details.</p>
+                        <br>
+                        <a href="${process.env.frontend_url || 'http://localhost:3000'}/dashboard/client/jobs/${jobId}/proposals" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Proposal</a>
+                    </div>
+                `
+            });
+        }
 
         res.status(201).json(proposal);
     } catch (error) {

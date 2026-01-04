@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import sendEmail from '../utils/email.js';
 
 const register = async (req, res) => {
     try {
@@ -41,6 +42,24 @@ const register = async (req, res) => {
                 password: hashedPassword,
                 role: role || 'CLIENT'
             }
+        });
+
+        // Send Welcome Email
+        await sendEmail({
+            to: email,
+            subject: 'Welcome to FreelanceHub!',
+            text: `Hi ${first}, welcome to FreelanceHub! We're excited to have you on board.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #2563eb;">Welcome to FreelanceHub!</h2>
+                    <p>Hi ${first},</p>
+                    <p>We're thrilled to have you join our community of freelancers and clients.</p>
+                    <p>Get started by setting up your profile or browsing available jobs.</p>
+                    <br>
+                    <p>Best regards,</p>
+                    <p>The FreelanceHub Team</p>
+                </div>
+            `
         });
 
         res.status(201).json({
@@ -88,6 +107,23 @@ const login = async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        // Send Login Alert Email
+        await sendEmail({
+            to: user.email,
+            subject: 'New Login to FreelanceHub',
+            text: `Hi ${user.firstName}, we detected a new login to your account.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #2563eb;">New Login Detected</h2>
+                    <p>Hi ${user.firstName},</p>
+                    <p>We detected a new login to your FreelanceHub account.</p>
+                    <p>Time: ${new Date().toLocaleString()}</p>
+                    <br>
+                    <p>If this wasn't you, please reset your password immediately.</p>
+                </div>
+            `
+        });
+
         res.json({
             message: "Login successful",
             token,
@@ -122,6 +158,8 @@ const getProfile = async (req, res) => {
                 email: true,
                 role: true,
                 companyName: true,
+                phone: true,      // Added
+                location: true,   // Added
                 rating: true,
                 walletBalance: true,
                 createdAt: true
@@ -141,14 +179,16 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { firstName, lastName, companyName } = req.body;
+        const { firstName, lastName, companyName, phone, location } = req.body;
 
         const updatedUser = await prisma.users.update({
             where: { id: userId },
             data: {
                 ...(firstName && { firstName }),
                 ...(lastName && { lastName }),
-                ...(companyName !== undefined && { companyName })
+                ...(companyName !== undefined && { companyName }),
+                ...(phone !== undefined && { phone }),       // Added
+                ...(location !== undefined && { location })  // Added
             },
             select: {
                 id: true,
@@ -157,6 +197,8 @@ const updateProfile = async (req, res) => {
                 email: true,
                 role: true,
                 companyName: true,
+                phone: true,      // Added
+                location: true,   // Added
                 rating: true,
                 walletBalance: true
             }
@@ -168,7 +210,8 @@ const updateProfile = async (req, res) => {
     }
 };
 
-import sendEmail from '../utils/email.js';
+// Moved to top
+
 
 // ... imports
 
