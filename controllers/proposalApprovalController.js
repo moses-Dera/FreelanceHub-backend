@@ -31,6 +31,11 @@ export const approveProposal = async (req, res) => {
             return res.status(400).json({ error: "Proposal already rejected" });
         }
 
+        // Check if job is already assigned to avoid double-hiring
+        if (proposal.job.status !== 'OPEN') {
+            return res.status(400).json({ error: "This job is already assigned to another freelancer." });
+        }
+
         // Update proposal status
         const updatedProposal = await prisma.proposals.update({
             where: { id },
