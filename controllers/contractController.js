@@ -19,12 +19,12 @@ const addContract = async (req, res) => {
         });
 
         if (!proposal) {
-            return res.status(404).json({ error: "Proposal not found" });
+            return res.status(404).json({ error: "We couldn't find this proposal. It may have been removed." });
         }
 
         // Verify user is the job owner (client)
         if (proposal.job.clientId !== userId) {
-            return res.status(403).json({ error: "Not authorized to create contract for this job" });
+            return res.status(403).json({ error: "You don't have permission to create a contract for this job." });
         }
 
         // Create the contract
@@ -63,7 +63,8 @@ const addContract = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error creating contract:', error);
+        res.status(500).json({ error: "We couldn't create this contract. Please try again." });
     }
 };
 
@@ -90,7 +91,8 @@ const getContracts = async (req, res) => {
 
         res.status(200).json(contracts);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching contracts:', error);
+        res.status(500).json({ error: "We couldn't load your contracts. Please try again." });
     }
 };
 
@@ -111,20 +113,21 @@ const getContractById = async (req, res) => {
         });
 
         if (!contract) {
-            return res.status(404).json({ error: "Contract not found" });
+            return res.status(404).json({ error: "We couldn't find this contract. It may have been removed." });
         }
 
         // Access control
         if (role === 'CLIENT' && contract.clientId !== userId) {
-            return res.status(403).json({ error: "Not authorized" });
+            return res.status(403).json({ error: "You don't have permission to view this contract." });
         }
         if (role === 'FREELANCER' && contract.freelancerId !== userId) {
-            return res.status(403).json({ error: "Not authorized" });
+            return res.status(403).json({ error: "You don't have permission to view this contract." });
         }
 
         res.json(contract);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching contract:', error);
+        res.status(500).json({ error: "We couldn't load this contract. Please try again." });
     }
 };
 

@@ -35,7 +35,8 @@ const fundWallet = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error funding wallet:', error);
+        res.status(500).json({ error: "We couldn't add funds to your wallet. Please try again." });
     }
 };
 
@@ -51,7 +52,7 @@ const withdrawFunds = async (req, res) => {
         });
 
         if (!user || user.walletBalance < parseInt(amount)) {
-            return res.status(400).json({ error: "Insufficient balance" });
+            return res.status(400).json({ error: "You don't have enough funds in your wallet for this withdrawal." });
         }
 
         // Create withdrawal record
@@ -83,7 +84,8 @@ const withdrawFunds = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error withdrawing funds:', error);
+        res.status(500).json({ error: "We couldn't process your withdrawal. Please try again." });
     }
 };
 
@@ -98,7 +100,7 @@ const paymentWebhook = async (req, res) => {
         });
 
         if (!payment) {
-            return res.status(404).json({ error: "Payment not found" });
+            return res.status(404).json({ error: "We couldn't find this payment" });
         }
 
         // Update payment status
@@ -122,7 +124,8 @@ const paymentWebhook = async (req, res) => {
         res.status(200).json({ message: "Webhook processed successfully" });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error processing webhook:', error);
+        res.status(500).json({ error: "We couldn't process this payment notification. Please try again." });
     }
 };
 
@@ -140,7 +143,8 @@ const getPaymentHistory = async (req, res) => {
         res.status(200).json(payments);
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching payment history:', error);
+        res.status(500).json({ error: "We couldn't load your payment history. Please try again." });
     }
 };
 

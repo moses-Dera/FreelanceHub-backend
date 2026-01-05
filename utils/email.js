@@ -1,12 +1,13 @@
 import fetch from 'node-fetch';
 
 const sendEmail = async ({ to, subject, html, text }) => {
-    // Check if configuration exists
-    const emailApiUrl = process.env.frontend_url ? `${process.env.frontend_url}/api/email` : 'http://localhost:3000/api/email';
-    const apiKey = process.env.INTERNAL_API_KEY || 'default-secret-key';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const emailApiUrl = `${frontendUrl}/api/email`;
+    const apiKey = process.env.INTERNAL_API_KEY || 'your-secret-api-key-here';
 
     try {
         console.log(`Sending email to ${to} via ${emailApiUrl}...`);
+
 
         const response = await fetch(emailApiUrl, {
             method: 'POST',
@@ -14,27 +15,26 @@ const sendEmail = async ({ to, subject, html, text }) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                apiKey,
                 to,
                 subject,
                 html,
-                text
+                text,
+                apiKey  // Add apiKey to body as expected by the email API
             })
         });
 
-        const data = await response.json();
-
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to send email via microservice');
+            const errorText = await response.text();
+            console.error('Email API Error:', response.status, errorText);
+            throw new Error(`Email API returned ${response.status}: ${errorText}`);
         }
 
+        const data = await response.json();
         console.log('Email sent successfully:', data);
         return data;
     } catch (error) {
         console.error('Email Service Error:', error.message);
-        // Fallback or re-throw depending on criticality
-        // For now, we log but don't crash the request if email fails (unless critical)
-        return { success: false, error: error.message };
+        throw error;  // Throw instead of returning to properly propagate errors
     }
 };
 

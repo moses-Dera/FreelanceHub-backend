@@ -20,7 +20,8 @@ const addJob = async (req, res) => {
         });
         res.status(201).json({ message: "Job added successfully", jobId: job.id });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error adding job:', error);
+        res.status(500).json({ error: "We couldn't create your job posting. Please try again." });
     }
 }
 
@@ -31,8 +32,7 @@ const getSingleJob = async (req, res) => {
 
         if (isNaN(jobId)) {
             return res.status(400).json({
-                error: "Invalid job ID. ID must be a number.",
-                receivedId: req.params.id
+                error: "The job ID you provided is not valid. Please check and try again."
             });
         }
 
@@ -49,12 +49,13 @@ const getSingleJob = async (req, res) => {
         });
 
         if (!job) {
-            return res.status(404).json({ error: "Job not found" });
+            return res.status(404).json({ error: "We couldn't find this job. It may have been removed." });
         }
 
         res.status(200).json(job);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error getting job:', error);
+        res.status(500).json({ error: "We couldn't load this job. Please try again." });
     }
 }
 
@@ -124,7 +125,7 @@ const getJobs = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching jobs:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: "We couldn't load the jobs list. Please try again." });
     }
 };
 
@@ -134,8 +135,7 @@ const updateJob = async (req, res) => {
 
         if (isNaN(jobId)) {
             return res.status(400).json({
-                error: "Invalid job ID. ID must be a number.",
-                receivedId: req.params.id
+                error: "The job ID you provided is not valid. Please check and try again."
             });
         }
 
@@ -157,7 +157,8 @@ const updateJob = async (req, res) => {
         });
         res.status(200).json({ message: "Job updated successfully", job });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error updating job:', error);
+        res.status(500).json({ error: "We couldn't update your job posting. Please try again." });
     }
 };
 
@@ -167,8 +168,7 @@ const deleteJob = async (req, res) => {
 
         if (isNaN(jobId)) {
             return res.status(400).json({
-                error: "Invalid job ID. ID must be a number.",
-                receivedId: req.params.id
+                error: "The job ID you provided is not valid. Please check and try again."
             });
         }
 
@@ -177,7 +177,8 @@ const deleteJob = async (req, res) => {
         });
         res.status(200).json({ message: "Job deleted successfully" });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error deleting job:', error);
+        res.status(500).json({ error: "We couldn't delete your job posting. Please try again." });
     }
 };
 
@@ -187,7 +188,7 @@ const toggleSavedJob = async (req, res) => {
         const { userId } = req.user;
 
         if (isNaN(jobId)) {
-            return res.status(400).json({ error: "Invalid job ID" });
+            return res.status(400).json({ error: "The job ID you provided is not valid. Please check and try again." });
         }
 
         // Check if already saved
@@ -224,7 +225,7 @@ const toggleSavedJob = async (req, res) => {
 
     } catch (error) {
         console.error("Error toggling saved job:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: "We couldn't save or unsave this job. Please try again." });
     }
 };
 

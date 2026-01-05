@@ -218,12 +218,17 @@ const updateProfile = async (req, res) => {
 const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
+        console.log(`[FORGOT PASSWORD] Request for email: ${email}`);
+
         const user = await prisma.users.findUnique({ where: { email } });
 
         if (!user) {
             // Security: Don't reveal if user exists
+            console.log(`[FORGOT PASSWORD] User not found for: ${email}`);
             return res.json({ message: "If an account with that email exists, we sent you a reset link." });
         }
+
+        console.log(`[FORGOT PASSWORD] User found, generating token...`);
 
         // Generate simple token (in production use crypto.randomBytes)
         // For now using time + random ID for simplicity
@@ -238,8 +243,11 @@ const forgotPassword = async (req, res) => {
             }
         });
 
+        console.log(`[FORGOT PASSWORD] Token saved, sending email...`);
+
         // Send Email via Microservice
-        const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
         await sendEmail({
             to: email,
             subject: 'Password Reset Request - FreelanceHub',
@@ -253,11 +261,12 @@ const forgotPassword = async (req, res) => {
             `
         });
 
-        console.log(`[EMAIL SENT] Password Reset Link for ${email}`);
+        console.log(`[FORGOT PASSWORD] ✅ Email sent successfully for ${email}`);
 
         res.json({ message: "If an account with that email exists, we sent you a reset link." });
     } catch (error) {
-        console.error(error);
+        console.error('[FORGOT PASSWORD] ❌ Error:', error);
+        console.error('[FORGOT PASSWORD] Stack trace:', error.stack);
         res.status(500).json({ error: "Failed to process request" });
     }
 };

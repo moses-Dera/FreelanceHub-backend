@@ -13,16 +13,16 @@ export const addProposal = async (req, res) => {
             where: { id: parseInt(jobId) },
             include: { client: { select: { email: true } } }
         });
-        if (!job) return res.status(404).json({ error: "Job not found" });
+        if (!job) return res.status(404).json({ error: "We couldn't find this job. It may have been removed." });
 
         // Check if job is open
-        if (job.status !== 'OPEN') return res.status(400).json({ error: "Job is not open" });
+        if (job.status !== 'OPEN') return res.status(400).json({ error: "This job is no longer accepting applications." });
 
         // Check if already applied
         const existing = await prisma.proposals.findFirst({
             where: { jobId: parseInt(jobId), userId }
         });
-        if (existing) return res.status(400).json({ error: "Already applied to this job" });
+        if (existing) return res.status(400).json({ error: "You have already applied to this job." });
 
         const proposal = await prisma.proposals.create({
             data: {
@@ -72,8 +72,8 @@ export const addProposal = async (req, res) => {
 
         res.status(201).json(proposal);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to submit proposal" });
+        console.error('Error submitting proposal:', error);
+        res.status(500).json({ error: "We couldn't submit your proposal. Please try again." });
     }
 };
 
@@ -84,12 +84,12 @@ export const getJobProposals = async (req, res) => {
         const { userId } = req.user;
 
         const job = await prisma.jobs.findUnique({ where: { id: parseInt(jobId) } });
-        if (!job) return res.status(404).json({ error: "Job not found" });
+        if (!job) return res.status(404).json({ error: "We couldn't find this job. It may have been removed." });
 
         // Security check: Only job owner can view all proposals
         // ADMIN can also view
         if (job.clientId !== userId && req.user.role !== 'ADMIN') {
-            return res.status(403).json({ error: "Not authorized" });
+            return res.status(403).json({ error: "You don't have permission to view these proposals." });
         }
 
         const proposals = await prisma.proposals.findMany({
@@ -103,8 +103,8 @@ export const getJobProposals = async (req, res) => {
 
         res.json(proposals);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to fetch proposals" });
+        console.error('Error fetching proposals:', error);
+        res.status(500).json({ error: "We couldn't load the proposals for this job. Please try again." });
     }
 };
 
@@ -125,8 +125,8 @@ export const getMyProposals = async (req, res) => {
 
         res.json(proposals);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to fetch your proposals" });
+        console.error('Error fetching user proposals:', error);
+        res.status(500).json({ error: "We couldn't load your proposals. Please try again." });
     }
 };
 
@@ -155,8 +155,8 @@ export const getAllClientProposals = async (req, res) => {
 
         res.json(proposals);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to fetch proposals" });
+        console.error('Error fetching client proposals:', error);
+        res.status(500).json({ error: "We couldn't load the proposals. Please try again." });
     }
 };
 
@@ -174,16 +174,16 @@ export const getProposal = async (req, res) => {
             }
         });
 
-        if (!proposal) return res.status(404).json({ error: "Proposal not found" });
+        if (!proposal) return res.status(404).json({ error: "We couldn't find this proposal. It may have been removed." });
 
         // Access control: Owner of proposal OR Owner of Job OR Admin
         if (proposal.userId !== userId && proposal.job.clientId !== userId && req.user.role !== 'ADMIN') {
-            return res.status(403).json({ error: "Not authorized" });
+            return res.status(403).json({ error: "You don't have permission to view this proposal." });
         }
 
         res.json(proposal);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to fetch proposal" });
+        console.error('Error fetching proposal:', error);
+        res.status(500).json({ error: "We couldn't load this proposal. Please try again." });
     }
 };
