@@ -104,13 +104,7 @@ See [API_ENDPOINTS.md](./API_ENDPOINTS.md) for a detailed list of available endp
 - **Jobs**: `GET /api/jobs`, `POST /api/jobs`
 - **Proposals**: `POST /api/jobs/:id/proposals`
 
-## 🧪 Testing
 
-Run strict unit and integration tests:
-
-```bash
-npm test
-```
 
 ## 📄 License
 
