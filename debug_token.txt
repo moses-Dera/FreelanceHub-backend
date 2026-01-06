@@ -1,3 +1,0 @@
-Time: 2026-01-04T03:56:40.446Z
-Error: jwt malformed
-Token: "undefined"
