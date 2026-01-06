@@ -50,11 +50,13 @@ const corsOptions = {
     }
 
     // Allow specific production domains
+    // Allow specific production domains
     const allowedOrigins = [
-      'https://your-frontend-domain.com',
-      'https://your-app.vercel.app',
-      'https://your-app.netlify.app'
-    ];
+      process.env.FRONTEND_URL,           // Main frontend URL from env
+      'https://freelancehub.vercel.app',  // Example production domain
+      'https://frehub.vercel.app',        // User provided frontend
+      'https://frehub.vercel.app/'        // User provided frontend (with slash)
+    ].filter(Boolean);                    // Remove undefined/null values
 
     if (allowedOrigins.includes(origin)) {
       console.log('✅ Allowing production origin:', origin);
