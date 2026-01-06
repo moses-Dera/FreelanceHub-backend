@@ -4,7 +4,7 @@
   "description": "A freelance marketplace where job seekers get job placement from clients.",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon --exec tsx server.js",
+    "dev": "nodemon server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "npm test -- --watch",
     "test:coverage": "npm test -- --coverage"
