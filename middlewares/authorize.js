@@ -32,6 +32,7 @@ const authorize = (allowedRoles = []) => (req, res, next) => {
     req.user = decoded;
 
     if (allowedRoles.length > 0 && !allowedRoles.includes(req.user.role)) {
+      console.warn(`[Authorize] Access denied. User Role: ${req.user.role}, Allowed: ${allowedRoles.join(', ')}`);
       return res
         .status(403)
         .json({ message: "Access denied. Insufficient permissions." });
