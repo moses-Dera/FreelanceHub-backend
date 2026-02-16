@@ -2,7 +2,7 @@ import { prisma } from '../lib/prisma.js';
 
 const addJob = async (req, res) => {
     try {
-        const { title, description, category, skills, budgetMin, budgetMax, deadline, status } = req.body;
+        const { title, description, category, skills, budgetMin, budgetMax, deadline, status, jobType } = req.body;
         const clientId = req.user.userId;
 
         const job = await prisma.jobs.create({
@@ -15,7 +15,8 @@ const addJob = async (req, res) => {
                 budgetMin: String(budgetMin || 0),
                 budgetMax: String(budgetMax || 0),
                 deadline: new Date(deadline),
-                status: status || 'OPEN'
+                status: status || 'OPEN',
+                jobType: jobType || 'CONTRACT'
             }
         });
         res.status(201).json({ message: "Job added successfully", jobId: job.id });
@@ -61,7 +62,7 @@ const getSingleJob = async (req, res) => {
 
 const getJobs = async (req, res) => {
     try {
-        const { search, filter, tab } = req.query; // Added tab
+        const { search, filter, tab, type } = req.query; // Added type filter
         const { userId, role } = req.user || {};
 
         let where = {};
@@ -84,6 +85,11 @@ const getJobs = async (req, res) => {
                 ],
             };
             where = { ...where, ...searchConditions };
+        }
+
+        // Filter by Job Type (e.g. ?type=INTERNSHIP)
+        if (type) {
+            where.jobType = type;
         }
 
         // Tab Filtering Logic
@@ -139,7 +145,7 @@ const updateJob = async (req, res) => {
             });
         }
 
-        const { title, description, category, skills, budgetMin, budgetMax, deadline, status } = req.body;
+        const { title, description, category, skills, budgetMin, budgetMax, deadline, status, jobType } = req.body;
         const job = await prisma.jobs.update({
             where: {
                 id: jobId
@@ -152,7 +158,8 @@ const updateJob = async (req, res) => {
                 budgetMin: String(budgetMin || 0),
                 budgetMax: String(budgetMax || 0),
                 deadline: deadline ? new Date(deadline) : undefined,
-                status // Allow status updates too (e.g. closing a job)
+                status, // Allow status updates too (e.g. closing a job)
+                jobType
             }
         });
         res.status(200).json({ message: "Job updated successfully", job });

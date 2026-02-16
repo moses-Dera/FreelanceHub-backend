@@ -28,11 +28,11 @@ describe('Proposal Endpoints', () => {
         console.log('JWT Object:', jwt);
         console.log('JWT Verify:', jwt.verify);
         (jwt.verify as jest.Mock).mockReturnValue({ userId: 'freelancer-uuid', role: 'FREELANCER' });
-        prismaMock.Users.findUnique.mockResolvedValue({ id: 'freelancer-uuid', role: 'FREELANCER' } as any);
+        prismaMock.users.findUnique.mockResolvedValue({ id: 'freelancer-uuid', role: 'FREELANCER' } as any);
     });
 
     test('POST /api/jobs/:id/proposals should create proposal', async () => {
-        prismaMock.Proposals.create.mockResolvedValue(mockProposal as any);
+        prismaMock.proposals.create.mockResolvedValue(mockProposal as any);
 
         const res = await request(app)
             .post('/api/jobs/1/proposals')
@@ -47,7 +47,7 @@ describe('Proposal Endpoints', () => {
     });
 
     test('GET /api/proposals/:id should return proposal', async () => {
-        prismaMock.Proposals.findUnique.mockResolvedValue(mockProposal as any);
+        prismaMock.proposals.findUnique.mockResolvedValue(mockProposal as any);
 
         const res = await request(app)
             .get('/api/proposals/prop-uuid')

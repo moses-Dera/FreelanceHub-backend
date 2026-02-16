@@ -9,4 +9,5 @@ export default {
         '^(\\.{1,2}/(?!generated).+)\\.js$': '$1',
     },
     setupFilesAfterEnv: ['<rootDir>/tests/prismaMock.ts'],
+    testPathIgnorePatterns: ['<rootDir>/scripts/', '<rootDir>/node_modules/'],
 };

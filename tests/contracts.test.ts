@@ -26,19 +26,19 @@ describe('Contract Endpoints', () => {
 
     beforeEach(() => {
         (jwt.verify as jest.Mock).mockReturnValue({ userId: 'client-uuid', role: 'CLIENT' });
-        prismaMock.Users.findUnique.mockResolvedValue({ id: 'client-uuid', role: 'CLIENT' } as any);
+        prismaMock.users.findUnique.mockResolvedValue({ id: 'client-uuid', role: 'CLIENT' } as any);
     });
 
     test('POST /api/contracts should create contract', async () => {
         // Mock successful proposal lookup check
-        prismaMock.Proposals.findUnique.mockResolvedValue({
+        prismaMock.proposals.findUnique.mockResolvedValue({
             id: 'prop-id',
             job: { clientId: 'client-uuid' }
         } as any);
 
-        prismaMock.Contracts.create.mockResolvedValue(mockContract as any);
-        prismaMock.Proposals.update.mockResolvedValue({} as any);
-        prismaMock.Jobs.update.mockResolvedValue({} as any);
+        prismaMock.contracts.create.mockResolvedValue(mockContract as any);
+        prismaMock.proposals.update.mockResolvedValue({} as any);
+        prismaMock.jobs.update.mockResolvedValue({} as any);
 
         const res = await request(app)
             .post('/api/contracts')

@@ -310,4 +310,38 @@ const resetPassword = async (req, res) => {
     }
 };
 
-export { register, login, logout, getProfile, updateProfile, forgotPassword, resetPassword };
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await prisma.users.findMany({
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                role: true,
+                companyName: true,
+                createdAt: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const deleteUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        await prisma.users.delete({
+            where: { id: userId }
+        });
+        res.json({ message: "User deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export { register, login, logout, getProfile, updateProfile, forgotPassword, resetPassword, getAllUsers, deleteUser };

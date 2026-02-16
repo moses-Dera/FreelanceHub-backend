@@ -11,6 +11,7 @@ import proposalRoutes from './routes/proposalRoutes.js';
 import contractRoutes from './routes/contractRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -101,6 +102,8 @@ app.use('/api/contracts', contractRoutes); // No cache - real-time data
 app.use('/api/payments', paymentRoutes); // No cache - financial data
 console.log('Mounting /api/notifications...');
 app.use('/api/notifications', notificationRoutes);
+console.log('Mounting /api/admin...');
+app.use('/api/admin', adminRoutes);
 
 
 if (process.env.NODE_ENV !== 'test') {

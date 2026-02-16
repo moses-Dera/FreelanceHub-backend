@@ -18,7 +18,7 @@ describe('Job Endpoints', () => {
     };
 
     test('GET /api/jobs should return list of jobs', async () => {
-        prismaMock.Jobs.findMany.mockResolvedValue([mockJob] as any);
+        prismaMock.jobs.findMany.mockResolvedValue([mockJob] as any);
 
         const res = await request(app).get('/api/jobs');
 
@@ -28,7 +28,7 @@ describe('Job Endpoints', () => {
     });
 
     test('GET /api/jobs/:id should return single job', async () => {
-        prismaMock.Jobs.findUnique.mockResolvedValue(mockJob as any);
+        prismaMock.jobs.findUnique.mockResolvedValue(mockJob as any);
 
         const res = await request(app).get('/api/jobs/1');
 

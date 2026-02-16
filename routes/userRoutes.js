@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, logout, getProfile, updateProfile, forgotPassword, resetPassword } from '../controllers/userController.js';
+import { register, login, logout, getProfile, updateProfile, forgotPassword, resetPassword, getAllUsers, deleteUser } from '../controllers/userController.js';
 import authorize from '../middlewares/authorize.js';
 
 const router = express.Router();
@@ -14,5 +14,9 @@ router.post('/reset-password', resetPassword);
 // Profile routes (authorization required)
 router.get('/profile', authorize(), getProfile);
 router.put('/profile', authorize(), updateProfile);
+
+// Admin routes
+router.get('/', authorize(['ADMIN']), getAllUsers);
+router.delete('/:id', authorize(['ADMIN']), deleteUser);
 
 export default router;

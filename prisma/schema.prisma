@@ -6,6 +6,7 @@
 
 generator client {
   provider        = "prisma-client-js"
+  binaryTargets   = ["native", "windows"]
 }
 
 datasource db {
@@ -55,6 +56,13 @@ enum jobStatus {
   COMPLETED
 }
 
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
 model Jobs {
   id          Int       @id @default(autoincrement())
   clientId    String    @db.Uuid
@@ -62,6 +70,7 @@ model Jobs {
   title       String
   description String
   category    String?
+  jobType     JobType   @default(CONTRACT) // Added jobType field
   skills      String[]
   budgetMin   String
   budgetMax   String
